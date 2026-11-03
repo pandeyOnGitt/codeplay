@@ -15,8 +15,10 @@ const watch = process.argv.includes('--watch');
 const out = path.join(root, 'dist');
 fs.mkdirSync(out, { recursive: true });
 
-/** Load KEY=VALUE pairs from a .env file into process.env (does not override existing). */
-function loadEnvFile(file) {
+/** Load KEY=VALUE pairs from a .env file into process.env.
+ *  @param {boolean} override  when true, file values win over existing env
+ */
+function loadEnvFile(file, override = false) {
   if (!fs.existsSync(file)) return;
   for (const line of fs.readFileSync(file, 'utf8').split(/\r?\n/)) {
     const trimmed = line.trim();
@@ -28,12 +30,16 @@ function loadEnvFile(file) {
     if ((val.startsWith('"') && val.endsWith('"')) || (val.startsWith("'") && val.endsWith("'"))) {
       val = val.slice(1, -1);
     }
-    if (process.env[key] === undefined) process.env[key] = val;
+    if (override || process.env[key] === undefined) process.env[key] = val;
   }
 }
 
-loadEnvFile(path.join(root, '.env'));
+// Local defaults, then production overrides for `npm run build` (not --watch).
+// Vercel Project env vars (already in process.env) win over files.
+loadEnvFile(path.join(root, '.env'), false);
+if (!watch) loadEnvFile(path.join(root, '.env.production'), true);
 const apiUrl = (process.env.VITE_API_URL || 'http://localhost:5000').replace(/\/$/, '');
+console.log(`[codeplay] API_BASE → ${apiUrl}`);
 
 
 function walk(dir, acc = []) {
@@ -93,9 +99,9 @@ const options = {
   loader: { '.js': 'jsx' },
   define: {
     'process.env.NODE_ENV': watch ? '"development"' : '"production"',
-    'process.env.VITE_API_URL': JSON.stringify(apiUrl),
-    'import.meta.env.VITE_API_URL': JSON.stringify(apiUrl),
+    __CODEPLAY_API_URL__: JSON.stringify(apiUrl),
   },
+
 
   plugins: [{
     name: 'css-and-html',

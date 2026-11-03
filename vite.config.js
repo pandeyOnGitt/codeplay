@@ -11,7 +11,7 @@ export default defineConfig(({ mode }) => {
     plugins: [react(), tailwindcss()],
     base: './',
     define: {
-      'process.env.VITE_API_URL': JSON.stringify(apiUrl),
+      __CODEPLAY_API_URL__: JSON.stringify(apiUrl),
     },
   };
 });
