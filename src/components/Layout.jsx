@@ -223,7 +223,9 @@ export default function Layout({ children }) {
       )}
       <div className="flex-1 min-w-0 flex flex-col">
         <header className="sticky top-0 z-40 bg-cream/95 backdrop-blur border-b-2 border-ink px-3 md:px-6 py-2 flex items-center gap-2">
-          <button className="lg:hidden btn px-2.5" onClick={() => setMobileOpen(true)} aria-label="Open menu"><LuMenu /></button>
+          <div className="lg:hidden">
+            <button type="button" className="btn px-2.5" onClick={() => setMobileOpen(true)} aria-label="Open menu"><LuMenu /></button>
+          </div>
           <div className="lg:hidden"><Logo /></div>
           <div className="ml-auto flex items-center gap-2 md:gap-3">
             <div className="lg:hidden"><XPChip /></div>
