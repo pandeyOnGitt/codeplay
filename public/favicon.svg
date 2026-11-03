@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="CodePlay Academy">
+  <rect width="64" height="64" rx="14" fill="#FF8A3D"/>
+  <rect x="2" y="2" width="60" height="60" rx="12" fill="none" stroke="#30343B" stroke-width="4"/>
+  <path d="M24 20 L14 32 L24 44" fill="none" stroke="#FFF9EF" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M40 20 L50 32 L40 44" fill="none" stroke="#FFF9EF" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>

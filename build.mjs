@@ -15,6 +15,27 @@ const watch = process.argv.includes('--watch');
 const out = path.join(root, 'dist');
 fs.mkdirSync(out, { recursive: true });
 
+/** Load KEY=VALUE pairs from a .env file into process.env (does not override existing). */
+function loadEnvFile(file) {
+  if (!fs.existsSync(file)) return;
+  for (const line of fs.readFileSync(file, 'utf8').split(/\r?\n/)) {
+    const trimmed = line.trim();
+    if (!trimmed || trimmed.startsWith('#')) continue;
+    const i = trimmed.indexOf('=');
+    if (i < 0) continue;
+    const key = trimmed.slice(0, i).trim();
+    let val = trimmed.slice(i + 1).trim();
+    if ((val.startsWith('"') && val.endsWith('"')) || (val.startsWith("'") && val.endsWith("'"))) {
+      val = val.slice(1, -1);
+    }
+    if (process.env[key] === undefined) process.env[key] = val;
+  }
+}
+
+loadEnvFile(path.join(root, '.env'));
+const apiUrl = (process.env.VITE_API_URL || 'http://localhost:5000').replace(/\/$/, '');
+
+
 function walk(dir, acc = []) {
   for (const f of fs.readdirSync(dir)) {
     const p = path.join(dir, f);
@@ -46,7 +67,19 @@ async function buildCss() {
 }
 
 const htmlTemplate = fs.readFileSync(path.join(root, 'index.html'), 'utf8')
-  .replace('<script type="module" src="/src/main.jsx"></script>', '<link rel="stylesheet" href="app.css" />\n    <script src="app.js" defer></script>');
+  .replace('<script type="module" src="/src/main.jsx"></script>', '<link rel="stylesheet" href="app.css" />\n    <script src="app.js" defer></script>')
+  .replaceAll('href="/favicon', 'href="./favicon')
+  .replaceAll('href="/apple-touch-icon', 'href="./apple-touch-icon');
+
+function copyPublic() {
+  const pub = path.join(root, 'public');
+  if (!fs.existsSync(pub)) return;
+  for (const name of fs.readdirSync(pub)) {
+    const from = path.join(pub, name);
+    if (!fs.statSync(from).isFile()) continue;
+    fs.copyFileSync(from, path.join(out, name));
+  }
+}
 
 const options = {
   entryPoints: [path.join(root, 'src/main.jsx')],
@@ -58,7 +91,12 @@ const options = {
   outfile: path.join(out, 'app.js'),
   jsx: 'automatic',
   loader: { '.js': 'jsx' },
-  define: { 'process.env.NODE_ENV': watch ? '"development"' : '"production"' },
+  define: {
+    'process.env.NODE_ENV': watch ? '"development"' : '"production"',
+    'process.env.VITE_API_URL': JSON.stringify(apiUrl),
+    'import.meta.env.VITE_API_URL': JSON.stringify(apiUrl),
+  },
+
   plugins: [{
     name: 'css-and-html',
     setup(b) {
@@ -68,6 +106,7 @@ const options = {
       b.onEnd(async (r) => {
         if (r.errors.length) return;
         await buildCss();
+        copyPublic();
         fs.writeFileSync(path.join(out, 'index.html'), htmlTemplate);
         console.log(`[codeplay] built ${new Date().toLocaleTimeString()}`);
       });

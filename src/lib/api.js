@@ -1,6 +1,14 @@
-/** Backend base URL. Override with window.CODEPLAY_API if needed. */
-export const API_BASE =
-  (typeof window !== 'undefined' && window.CODEPLAY_API) || 'http://localhost:5000';
+function resolveApiBase() {
+  if (typeof window !== 'undefined' && window.CODEPLAY_API) {
+    return String(window.CODEPLAY_API).replace(/\/$/, '');
+  }
+  // Build injects this from `.env` (esbuild + Vite define)
+  const fromEnv = typeof process !== 'undefined' && process.env && process.env.VITE_API_URL;
+  return String(fromEnv || 'http://localhost:5000').replace(/\/$/, '');
+}
+
+/** Backend base URL from `.env` (`VITE_API_URL`), or `window.CODEPLAY_API`. */
+export const API_BASE = resolveApiBase();
 
 const TOKEN_KEY = 'codeplay-academy:token';
 
@@ -29,7 +37,7 @@ export async function api(path, { method = 'GET', body, token } = {}) {
       body: body !== undefined ? JSON.stringify(body) : undefined,
     });
   } catch {
-    const err = new Error('Cannot reach the server. Is the backend running on port 5000?');
+    const err = new Error(`Cannot reach the server at ${API_BASE}. Is the backend running?`);
     err.network = true;
     throw err;
   }
