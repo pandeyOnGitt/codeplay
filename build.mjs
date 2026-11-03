@@ -34,12 +34,17 @@ function loadEnvFile(file, override = false) {
   }
 }
 
-// Local defaults, then production overrides for `npm run build` (not --watch).
-// Vercel Project env vars (already in process.env) win over files.
+// Priority: real environment (Vercel / shell) > local `.env` > localhost fallback.
+// Never bake a production URL into the repo — set VITE_API_URL on Vercel.
 loadEnvFile(path.join(root, '.env'), false);
-if (!watch) loadEnvFile(path.join(root, '.env.production'), true);
 const apiUrl = (process.env.VITE_API_URL || 'http://localhost:5000').replace(/\/$/, '');
-console.log(`[codeplay] API_BASE → ${apiUrl}`);
+const apiSource = process.env.VITE_API_URL
+  ? (process.env.VERCEL ? 'Vercel env' : 'env')
+  : 'fallback';
+console.log(`[codeplay] API_BASE from ${apiSource}`);
+if (!watch && !process.env.VITE_API_URL) {
+  console.warn('[codeplay] WARNING: VITE_API_URL is unset — production builds will call localhost.');
+}
 
 
 function walk(dir, acc = []) {
