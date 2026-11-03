@@ -43,7 +43,7 @@ export async function api(path, { method = 'GET', body, token } = {}) {
       body: body !== undefined ? JSON.stringify(body) : undefined,
     });
   } catch {
-    const err = new Error(`Cannot reach the server at ${API_BASE}. Is the backend running?`);
+    const err = new Error('Cannot reach the server. Please try again in a moment.');
     err.network = true;
     throw err;
   }
